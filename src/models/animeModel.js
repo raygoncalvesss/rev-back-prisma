@@ -1,4 +1,8 @@
+import prisma from "../../prisma/prisma.js";
+
 // Array para armazenar os animes em memória
+// Let animes = [] 
+
 let animes = [
   {
     id: 1,
@@ -28,23 +32,31 @@ let animes = [
     updatedAt: new Date(),
   },
 ];
-
-// Variável para controlar o próximo ID
-let nextId = 3;
-
 class AnimeModel {
   // Obter todos os animes
-  findAll() {
-    return animes;
-  }
+  async findAll() {
+  const animes = await prisma.anime.findMany({
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return animes;
+}
 
   // Obter um anime pelo ID
-  findById(id) {
-    return animes.find((anime) => anime.id === Number(id)) || null;
+  async findById(id) {
+    const anime = await prisma.anime.findUnique({
+      where: {
+        id: Number(id),
+      },  
+    });
+
+    return anime;
   }
 
   // Criar um novo anime
-  create(
+  async create(
     title,
     description,
     episodes,
@@ -54,26 +66,24 @@ class AnimeModel {
     rating,
     imageUrl
   ) {
-    const newAnime = {
-      id: nextId++,
-      title,
-      description,
-      episodes,
-      releaseYear,
-      studio,
-      genres,
-      rating,
-      imageUrl,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    const newAnime = await prisma.anime.create({
+      data: {
+        title,
+        description,
+        episodes,
+        releaseYear,
+        studio,
+        genres,
+        rating,
+        imageUrl,
+      },
+    });
 
-    animes.push(newAnime);
     return newAnime;
   }
 
   // Atualizar um anime
-  update(
+  async update(
     id,
     title,
     description,
@@ -84,35 +94,60 @@ class AnimeModel {
     rating,
     imageUrl
   ) {
-    const anime = this.findById(id);
+    const anime = await this.findById(id);
 
     if (!anime) {
       return null;
     }
 
     // Atualize o anime existente com os novos dados
-    anime.title = title || anime.title;
-    anime.description = description || anime.description;
-    anime.episodes = episodes || anime.episodes;
-    anime.releaseYear = releaseYear || anime.releaseYear;
-    anime.studio = studio || anime.studio;
-    anime.genres = genres || anime.genres;
-    anime.rating = rating || anime.rating;
-    anime.imageUrl = imageUrl || anime.imageUrl;
-    anime.updatedAt = new Date(); // Atualiza a data de modificação
+    const data = {};
+    if (title !== underfined) {
+      data.title = title
+    }
+    if (description !== underfined) {
+      data.description = description
+    }
+    if (episodes !== underfined) {
+      data.episodes = episodes
+    }
+    if (releaseYear !== underfined) {
+      data.releaseYear = releaseYear
+    }
+    if (studio !== underfined) {
+      data.studio = studio
+    }
+    if (genres !== underfined) {
+      data.genres = genres
+    }
+    if (rating !== underfined) {
+      data.rating = rating
+    }
+    if (imageUrl !== underfined) {
+      data.imageUrl = imageUrl
+    }
+    const animeUpdated = await prisma.anime.update({
+      where: {
+        id: Number(id),
+      },
+      data,
+    });
 
-    return anime;
+    return animeUpdated;
   }
 
   // Remover um anime
-  delete(id) {
-    const anime = this.findById(id);
+ async delete(id) {
+    const anime = await this.findById(id);
     if (!anime) {
       return null;
     }
 
-    // Filtra o anime a ser removido
-    animes = animes.filter((anime) => anime.id !== Number(id));
+    await prisma.anime.delete({
+      where: {
+        id: Number(id),
+      },
+    });
 
     return true;
   }
